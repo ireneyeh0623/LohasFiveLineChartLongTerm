@@ -112,7 +112,7 @@ if not calculate_btn:
 # 判斷邏輯：按下按鈕後才執行抓取資料的動作：
 else:
     # 顯示股票代碼
-    st.write(f"### {search_id}")
+    st.markdown(f"<h3 style='color: {font_color};'>{search_id}</h3>", unsafe_allow_html=True)
 
     # --- A. 數據下載與清理 ---
     # 使用 auto_adjust=True 取得還原股價，反映真實報酬率
