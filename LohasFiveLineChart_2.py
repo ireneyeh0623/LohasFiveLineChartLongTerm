@@ -108,7 +108,7 @@ search_id = f"{stock_id}.TW" if stock_id.isdigit() else stock_id
 
 # 判斷邏輯：如果按鈕「還沒被按下」
 if not calculate_btn:
-    st.info("💡 請點開左上角選單 [ > ] 在左側面板設定參數後按「開始計算」即可產出圖表")
+    st.info("💡 請點開左上角選單 [ >> ] 在左側面板設定參數後，按「開始計算」即可產出圖表")
 # 判斷邏輯：按下按鈕後才執行抓取資料的動作：
 else:
     # 顯示股票代碼
