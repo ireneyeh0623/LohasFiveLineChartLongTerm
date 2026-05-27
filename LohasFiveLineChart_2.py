@@ -124,7 +124,11 @@ else:
         # 處理 yfinance 可能產生的多層欄位索引 (MultiIndex)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-            
+
+        # 相容新版 yfinance (0.2.x)：台股等時區感知市場，日期欄名可能為 'Datetime' 而非 'Date'
+        if 'Datetime' in df.columns and 'Date' not in df.columns:
+            df = df.rename(columns={'Datetime': 'Date'})
+
         # 排除無交易資料的日期 (NaN)，確保計算精確度
         df = df.dropna(subset=['Close']) 
         df['Close_1D'] = df['Close'].values.flatten()
