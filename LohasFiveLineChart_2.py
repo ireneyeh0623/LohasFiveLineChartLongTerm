@@ -119,15 +119,19 @@ else:
     data = yf.download(search_id, start=start_date, end=end_date, auto_adjust=True)
     
     if not data.empty:
-        # 重設索引（reset_index）_將yfinance 下載後的原始資料，日期轉為可以被讀取的一般欄位後，建立數字序列（回歸必備），防止計算錯誤
-        df = data.copy().reset_index()
+        # 重設索引前先標準化日期 index（最穩健的相容做法）：
+        # 步驟 1：移除時區資訊（如有），避免台股 Asia/Taipei 等時區引發格式不一致
+        # 步驟 2：強制將 index 名稱設為 'Date'（新版 yfinance 可能命名為 'Datetime' 或其他）
+        # 步驟 3：再執行 reset_index()，此時欄位名稱必定為 'Date'
+        df = data.copy()
+        if hasattr(df.index, 'tz') and df.index.tz is not None:
+            df.index = df.index.tz_localize(None)
+        df.index.name = 'Date'
+        df = df.reset_index()
+
         # 處理 yfinance 可能產生的多層欄位索引 (MultiIndex)
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-
-        # 相容新版 yfinance (0.2.x)：台股等時區感知市場，日期欄名可能為 'Datetime' 而非 'Date'
-        if 'Datetime' in df.columns and 'Date' not in df.columns:
-            df = df.rename(columns={'Datetime': 'Date'})
 
         # 排除無交易資料的日期 (NaN)，確保計算精確度
         df = df.dropna(subset=['Close']) 
