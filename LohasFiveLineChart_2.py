@@ -17,7 +17,7 @@ st.set_page_config(page_title="長線股價五線譜", layout="wide")
 
 st.sidebar.header("查詢設定")
 # 股票代號輸入：預設為 2330.TW (台積電)
-stock_id = st.sidebar.text_input("股票代號(如2330.TW或AAPL)", "2330.TW")
+stock_id = st.sidebar.text_input("股票代號(如2330或AAPL)", "2330")
 # 日期範圍選擇：設定資料擷取的起始與結束時間
 start_date = st.sidebar.date_input("起始日期(YYYY/MM/DD)", datetime(2015, 8, 1))
 end_date = st.sidebar.date_input("結束日期(YYYY/MM/DD)", datetime.now())
@@ -103,21 +103,25 @@ else:
 
 st.title("📈 長線股價五線譜")
 
-# 預先處理搜尋代號邏輯：補全台股後綴
-search_id = f"{stock_id}.TW" if stock_id.isdigit() else stock_id
-
 # 判斷邏輯：如果按鈕「還沒被按下」
 if not calculate_btn:
     st.info("💡 請點開左上角選單 [ >> ] 在左側面板設定參數後，按「開始計算」即可產出圖表")
 # 判斷邏輯：按下按鈕後才執行抓取資料的動作：
 else:
+    # 股票代號自動後綴解析：依序嘗試原始輸入、.TW、.TWO
+    data = pd.DataFrame()
+    search_id = stock_id
+    candidates = [stock_id, f"{stock_id}.TW", f"{stock_id}.TWO"]
+    for candidate in candidates:
+        data = yf.download(candidate, start=start_date, end=end_date, auto_adjust=True, progress=False)
+        if not data.empty:
+            search_id = candidate
+            break
+
     # 顯示股票代碼
     st.markdown(f"<h3 style='color: {font_color};'>{search_id}</h3>", unsafe_allow_html=True)
 
     # --- A. 數據下載與清理 ---
-    # 使用 auto_adjust=True 取得還原股價，反映真實報酬率
-    data = yf.download(search_id, start=start_date, end=end_date, auto_adjust=True)
-    
     if not data.empty:
         # 重設索引前先標準化日期 index（最穩健的相容做法）：
         # 步驟 1：移除時區資訊（如有），避免台股 Asia/Taipei 等時區引發格式不一致
@@ -215,4 +219,4 @@ else:
         else:
             st.warning("資料量不足以計算回歸線。")
     else:
-        st.error("找不到資料，請檢查代號是否正確。")
+        st.error(f"找不到股票資料（已嘗試：{', '.join(candidates)}），請檢查代號或日期。")
